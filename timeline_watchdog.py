@@ -14,7 +14,7 @@ port = 9993
 def main(timeline):
     #ethernetprotocolapi.play(ip, port) dar play ao primeiro da timeline depois ficar a espera que ele acabe e so on e so forth
     loadedClips = ethernetprotocolapi.diskList(ip, port).decode().splitlines()[6:][:-1]
-    if set(eval(timeline)).issubset(loadedClips) == True: #DANGEROUS!! TRUSTING INPUT TO BE CORRECT!! IF THE .KTMF FILE IS CORRUPT SHIT WILL HAPPEN
+    if set(eval(timeline)).issubset(loadedClips) == True: #DANGEROUS!! TRUSTING INPUT TO BE CORRECT!! IF THE .KTMF FILE IS CORRUPT SHIT WILL HAPPEN. MUDAR
         #This means the timeline is valid
         for range(1, len(eval(timeline))) as x:
             #descobrir qual a subtstring de loaded clips que = a timeline[x] e dar play a esse e dormir por a duração
