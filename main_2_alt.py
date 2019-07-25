@@ -1,188 +1,14 @@
+# -*- coding: utf-8 -*-
+
+# Form implementation generated from reading ui file 'main_2_alt.ui'
+#
+# Created by: PyQt5 UI code generator 5.13.0
+#
+# WARNING! All changes made in this file will be lost!
+
+
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QFileDialog, QDialog
-import background_rc
-import sys
-import ethernetprotocolapi
-import json
-import subprocess
 
-def FileDialog(forOpen=True):
-    options = QFileDialog.Options()
-    options |= QFileDialog.DontUseNativeDialog
-    options |= QFileDialog.DontUseCustomDirectoryIcons
-    dialog = QFileDialog()
-    dialog.setOptions(options)
-
-    dialog.setFilter(dialog.filter() | QtCore.QDir.Hidden)
-    dialog.setFileMode(QFileDialog.AnyFile)
-    dialog.setAcceptMode(QFileDialog.AcceptOpen) if forOpen else dialog.setAcceptMode(QFileDialog.AcceptSave)
-    dialog.setDefaultSuffix("ktmf")
-    dialog.setNameFilters([f'{"Kayto Timeline File"} (*.{"ktmf"})'])
-    if dialog.exec_() == QDialog.Accepted:
-        path = dialog.selectedFiles()[0]
-        return path
-    else:
-        return ''
-
-def addToCustomTimeline(self):
-    customTimeline.append(tlclip[self.spinBox.value()])
-    self.textBrowser_2.append()
-
-
-def importTimeline():
-    global path
-    path = FileDialog()
-    print(path)
-
-def outputToUi(output): #WIP, get a custom error / sucess message for each code. Ex "Started recording!" for record.
-    global outputBuffer
-    try:
-        outputBuffer = output.decode("utf-8")
-    except:
-        outputBuffer = output
-
-def actions(self, action):
-    if action == "ping":
-        if ethernetprotocolapi.ping(ip, port) != "err":
-            self.label_2.setText("Sucessfull")
-        else:
-            self.label_2.setText("Unsucessfull :(")
-
-    if actions == "toggleSlot":
-        ethernetprotocolapi.toggleSlot(ip, port)
-
-    if self.radioButton.isChecked() == True:
-        if action == "play":
-            global p
-            p = subprocess.Popen(["python", "timeline_watchdog.py", path, ip, port])
-            outputToUi("Started Timeline Watchdog")
-
-        if action == "stop":
-            p.terminate()
-            ethernetprotocolapi.stop(ip, port)
-
-    else:
-        if action == "play":
-            ethernetprotocolapi.play(ip, port)
-        elif action == "stop":
-            ethernetprotocolapi.stop(ip, port)
-        elif action == "record":
-            ethernetprotocolapi.record(ip, port)
-        elif action == "backLogic":
-            backLogic()
-        elif action == "frontLogic":
-            frontLogic()
-
-def updateTimeline(self):
-    global timelineContent
-    if timelineContent != eval(open(path, "r").read()):
-        self.textBrowser_2.clear()
-        for tlclip in eval(open(path, "r").read()):
-            self.textBrowser_2.append(tlclip)
-            timelineContent = eval(open(path, "r").read())
-
-def updateClips(self):
-    global clips
-    if ethernetprotocolapi.diskList(ip, port).decode("utf-8").splitlines() != clips:
-        clips = ethernetprotocolapi.diskList(ip, port).decode("utf-8").splitlines()
-        self.textBrowser.clear()
-        for clip in clips[6:][:-1]:
-            self.textBrowser.append(clip)
-
-def backLogic():
-    if str(ethernetprotocolapi.transportInfo(ip, port).split(b"timecode: ",1)[1][:11].decode("utf-8")) == "00:00:00:00": #Go to previous clip because we're at the start of one alredy
-            response = ethernetprotocolapi.gotoClip(ip, port, "prev")
-            outputToUi(response) #Handle response
-    else: #We're mid clip, go to the beggining
-        ethernetprotocolapi.clip(ip, port, "start")
-
-def frontLogic():
-    ethernetprotocolapi.gotoClip(ip, port, "next")
-
-
-def fileRetrive(arg):
-    with open("configFile.json", "r") as f:
-        return json.load(f)[arg]
-
-def fileSet(arg, setting):
-    with open("configFile.json", "r+") as f:
-                data = json.load(f)
-                data[arg] = setting
-                f.seek(0)
-                json.dump(data, f)
-                f.truncate()
-
-ip = fileRetrive("IP")
-port = fileRetrive("PORT")
-timerInterval = 100
-outputBuffer = ""
-clips = ""
-timeline = ""
-p = ''
-path = ""
-timelineContent = ""
-
-class Ui_Dialog(object):
-    def setupUi(self, Dialog):
-        Dialog.setObjectName("Dialog")
-        Dialog.resize(400, 300)
-        self.comboBox = QtWidgets.QComboBox(Dialog)
-        self.comboBox.setGeometry(QtCore.QRect(90, 20, 201, 21))
-        self.comboBox.setObjectName("comboBox")
-        self.comboBox.addItem("")
-        self.label = QtWidgets.QLabel(Dialog)
-        self.label.setGeometry(QtCore.QRect(10, 20, 81, 16))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.label.setFont(font)
-        self.label.setObjectName("label")
-        self.label_2 = QtWidgets.QLabel(Dialog)
-        self.label_2.setGeometry(QtCore.QRect(10, 60, 81, 16))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.label_2.setFont(font)
-        self.label_2.setObjectName("label_2")
-        self.plainTextEdit = QtWidgets.QPlainTextEdit(Dialog)
-        self.plainTextEdit.setGeometry(QtCore.QRect(90, 50, 201, 31))
-        self.plainTextEdit.setObjectName("plainTextEdit")
-        self.label_3 = QtWidgets.QLabel(Dialog)
-        self.label_3.setGeometry(QtCore.QRect(10, 90, 81, 16))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.label_3.setFont(font)
-        self.label_3.setObjectName("label_3")
-        self.plainTextEdit_2 = QtWidgets.QPlainTextEdit(Dialog)
-        self.plainTextEdit_2.setGeometry(QtCore.QRect(90, 90, 51, 31))
-        self.plainTextEdit_2.setObjectName("plainTextEdit_2")
-        self.pushButton = QtWidgets.QPushButton(Dialog)
-        self.pushButton.setGeometry(QtCore.QRect(300, 250, 75, 23))
-        self.pushButton.setObjectName("pushButton")
-
-        self.retranslateUi(Dialog)
-        self.actionsUi(Dialog)
-        QtCore.QMetaObject.connectSlotsByName(Dialog)
-
-    def retranslateUi(self, Dialog):
-        _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Kayto - Connection Settings"))
-        self.comboBox.setItemText(0, _translate("Dialog", "Blackmagic Hyperdeck Studio Mini "))
-        self.label.setText(_translate("Dialog", "Device Type:"))
-        self.label_2.setText(_translate("Dialog", "IP Address:"))
-        self.plainTextEdit.setPlainText(_translate("Dialog", str(fileRetrive("IP"))))
-        self.label_3.setText(_translate("Dialog", "TCP Port:"))
-        self.plainTextEdit_2.setPlainText(_translate("Dialog", str(fileRetrive("PORT"))))
-        self.pushButton.setText(_translate("Dialog", "Apply"))
-
-    def actionsUi(self, Dialog):
-        self.pushButton.clicked.connect(lambda: self.updateFile(Dialog))
-
-    def updateFile(self, Dialog):
-        fileSet("IP", self.plainTextEdit.toPlainText())
-        fileSet("PORT", self.plainTextEdit_2.toPlainText())
-        global ip
-        global port
-        ip = fileRetrive("IP")
-        port = fileRetrive("PORT")
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -225,7 +51,7 @@ class Ui_MainWindow(object):
         self.pushButton_3.setStyleSheet("background:rgb(255, 255, 255)")
         self.pushButton_3.setObjectName("pushButton_3")
         self.textBrowser = QtWidgets.QTextBrowser(self.centralwidget)
-        self.textBrowser.setGeometry(QtCore.QRect(590, 410, 381, 331))
+        self.textBrowser.setGeometry(QtCore.QRect(590, 410, 371, 331))
         self.textBrowser.setStyleSheet("background:rgb(255, 255, 255)")
         self.textBrowser.setObjectName("textBrowser")
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
@@ -276,12 +102,8 @@ class Ui_MainWindow(object):
         self.pushButton_7.setGeometry(QtCore.QRect(1330, 750, 131, 21))
         self.pushButton_7.setStyleSheet("background:rgb(255, 255, 255)")
         self.pushButton_7.setObjectName("pushButton_7")
-        self.checkBox = QtWidgets.QCheckBox(self.centralwidget)
-        self.checkBox.setGeometry(QtCore.QRect(1150, 750, 101, 21))
-        self.checkBox.setStyleSheet("background: transparent")
-        self.checkBox.setObjectName("checkBox")
         self.checkBox_2 = QtWidgets.QCheckBox(self.centralwidget)
-        self.checkBox_2.setGeometry(QtCore.QRect(1100, 750, 51, 21))
+        self.checkBox_2.setGeometry(QtCore.QRect(1159, 750, 51, 21))
         self.checkBox_2.setStyleSheet("background: transparent")
         self.checkBox_2.setObjectName("checkBox_2")
         self.horizontalSlider = QtWidgets.QSlider(self.centralwidget)
@@ -359,13 +181,11 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.actionsUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.timer = QtCore.QTimer()
         self.label.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" color:#ffffff;\">Last ping:</span></p></body></html>"))
         self.label_2.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" color:#ffffff;\">?</span></p></body></html>"))
         self.pushButton_2.setText(_translate("MainWindow", "Connectivity Settings"))
@@ -377,7 +197,6 @@ class Ui_MainWindow(object):
         self.pushButton_6.setText(_translate("MainWindow", "Import Timeline"))
         self.label_5.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" color:#ffffff;\">Output:</span></p></body></html>"))
         self.pushButton_7.setText(_translate("MainWindow", "Remove from Timeline"))
-        self.checkBox.setText(_translate("MainWindow", "Stop at each clip"))
         self.checkBox_2.setText(_translate("MainWindow", "Loop"))
         self.radioButton.setText(_translate("MainWindow", "Timeline Mode"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
@@ -388,42 +207,12 @@ class Ui_MainWindow(object):
         self.actionExport_Current_Timeline.setText(_translate("MainWindow", "Export Current Timeline"))
         self.actionToggle_Slot.setText(_translate("MainWindow", "Toggle Slot"))
         self.actionQuit.setText(_translate("MainWindow", "Quit"))
+import background_rc
 
-    def actionsUi(self, MainWindow):
-        self.pushButton.clicked.connect(lambda: actions(self, "play"))
-        self.pushButton_2.clicked.connect(lambda: Dialog.show())
-        self.pushButton_3.clicked.connect(lambda: actions(self, "ping"))
-        self.pushButton_4.clicked.connect(lambda: addToCustomTimeline(self))
-        self.pushButton_6.clicked.connect(lambda: importTimeline())
-        self.pushButton_8.clicked.connect(lambda: actions(self, "stop"))
-        self.pushButton_9.clicked.connect(lambda: actions(self, "record"))
-        self.pushButton_10.clicked.connect(lambda: actions(self, "backLogic"))
-        self.pushButton_11.clicked.connect(lambda: actions(self, "frontLogic"))
-        self.actionToggle_Slot.toggled.connect(lambda: actions(self, "toggleSlot"))
-        self.actionQuit.toggled.connect(lambda: sys.exit(0))
-        self.timer.timeout.connect(lambda: self.updateWindow(MainWindow))
-        self.timer.start(timerInterval)
-
-    def updateWindow(self, MainWindow):
-        global ip
-        global port
-        global outputBuffer
-        ip = fileRetrive("IP")
-        port = fileRetrive("PORT")
-        if outputBuffer != "":
-            self.textBrowser_3.append(outputBuffer)
-            outputBuffer = ""
-        if self.label_2.text() == "Sucessfull":
-            updateClips(self)
-        if path != "":
-            updateTimeline(self)
 
 if __name__ == "__main__":
-    print("Starting Kayto...")
+    import sys
     app = QtWidgets.QApplication(sys.argv)
-    Dialog = QtWidgets.QDialog()
-    ui = Ui_Dialog()
-    ui.setupUi(Dialog)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)

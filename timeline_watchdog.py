@@ -3,29 +3,38 @@ import sys
 import ethernetprotocolapi
 import time
 
-#path = str(sys.argv)[0]
-#ip = str(sys.argv)[1]
-#port = str(sys.argv)[2]
+path = str(sys.argv[1])
+ip = str(sys.argv[2])
+port = int(sys.argv[3])
 
-path = "C:/Users/Tomás/Documents/Kayto/timeline1.ktmf"
-ip = "169.254.102.73"
-port = 9993
+def convertToSeconds(timecode): ## WARNING: HOURS NOT IMPLEMENTED. TIMELINE CLIPS OVER AN HOUR LONG WILL NOT WORK. shit will happen
+    convertedTime = 0
+    minutes = int(timecode[:2])
+    seconds = int(timecode[-2:])
+    for i in range(0, minutes):
+        convertedTime += 60
+    convertedTime += seconds
+    return convertedTime
 
 def main(timeline):
-    #ethernetprotocolapi.play(ip, port) dar play ao primeiro da timeline depois ficar a espera que ele acabe e so on e so forth
     loadedClips = ethernetprotocolapi.diskList(ip, port).decode().splitlines()[6:][:-1]
-    if set(eval(timeline)).issubset(loadedClips) == True: #DANGEROUS!! TRUSTING INPUT TO BE CORRECT!! IF THE .KTMF FILE IS CORRUPT SHIT WILL HAPPEN. MUDAR
-        #This means the timeline is valid
-        for range(1, len(eval(timeline))) as x:
-            #descobrir qual a subtstring de loaded clips que = a timeline[x] e dar play a esse e dormir por a duração
+    if set(eval(timeline)).issubset(loadedClips) == True: #DANGEROUS!! TRUSTING INPUT TO BE CORRECT!! IF THE .KTMF FILE IS CORRUPT SHIT WILL HAPPEN.
+        #IF WE PASS THIS IF STATEMENT, TIMELINE FILE IS VALID
+        for i in range(0, len(eval(timeline))): #FOR EACH TL CLIP
+            for x in range(0, len(loadedClips)): #FOR EACH DISK CLIP
+                #print("Iteration")
+                if eval(timeline)[i][3:] == loadedClips[x][3:]: #IF CURRENTLY ITERATED TL CLIP IS THE DISK CLIP
+                    #print("playing clip %d" % (int(loadedClips[x][:1])))
+                    ethernetprotocolapi.goToClipId(ip, port, int(loadedClips[x][:1]))
+                    ethernetprotocolapi.play(ip, port)
+                    time.sleep(convertToSeconds(loadedClips[x][:-3][-5:]))
+                    ethernetprotocolapi.stop(ip, port)
 
-    loadedClipId = ethernetprotocolapi.transportInfo(ip, port).decode().splitlines()[8][9:]
-    #timecode = ethernetprotocolapi.clipsGetId(ip, port, int(clipId)).decode("utf-8").splitlines()[6][-11:] #get currently playing clip's duration
-    # Traduzir time code para segundos e time.sleep esses segundos e repetir o loop, sys.exit quando acabar
-    print(timeline)
-    print(loadedClips)
-    print(loadedClipId)
-    #ethernetprotocolapi.play(ip, port)
+        #print("exiting")
+        ethernetprotocolapi.stop(ip, port)
+        ethernetprotocolapi.goToClipId(ip, port, 1)
+        ethernetprotocolapi.quit(ip, port)
+        sys.exit(0)
 
 with open(path, "r") as f:
     timeline = f.read()

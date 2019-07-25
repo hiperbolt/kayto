@@ -34,6 +34,17 @@ def stop(ip, port):
     except:
         return "err"
 
+def quit(ip, port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((str(ip), int(port)))
+        s.send(b"quit\n")
+        data = s.recv(1024)
+        s.close()
+        return data
+    except:
+        return "err"
+
 def record(ip, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
@@ -137,6 +148,18 @@ def clipsGetId(ip, port, clipId):
     try:
         s.connect((str(ip), int(port)))
         s.send(("clips get: clip id: %d\n" % clipId).encode())
+        time.sleep(0.1)
+        data = s.recv(1024)
+        s.close()
+        return data
+    except:
+        return "err"
+
+def goToClipId(ip, port, clipId):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((str(ip), int(port)))
+        s.send(("goto: clip id: %d\n" % clipId).encode())
         time.sleep(0.1)
         data = s.recv(1024)
         s.close()
