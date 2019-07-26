@@ -6,6 +6,9 @@ import ethernetprotocolapi
 import json
 import subprocess
 
+def handleErr(err):
+    outputToUi("ERROR: " + err)
+
 def FileDialog(forOpen=True):
     options = QFileDialog.Options()
     options |= QFileDialog.DontUseNativeDialog
@@ -25,8 +28,31 @@ def FileDialog(forOpen=True):
         return ''
 
 def addToCustomTimeline(self):
-    customTimeline.append(tlclip[self.spinBox.value()])
-    self.textBrowser_2.append()
+    if clips != '':
+        global customTimeline
+        if customTimeline == ['nul']:
+            customTimeline = TimelineContent
+        try:
+            customTimeline.append(clips[self.spinBox.value()])
+            self.textBrowser_2.append()
+        except IndexError:
+            handleErr("Out of range!")
+    else:
+        handleErr("No Clips loaded!")
+
+def removeFromCustomTimeline(self):
+    global customTimeline
+    if customTimeline == ['nul']:
+        if timelineContent != '':
+            customTimeline = timelineContent
+        else:
+            handleErr("Nothing to remove!")
+            return
+    try:
+        del customTimeline[-self.spinBox_2.value()]
+        print(customTimeline)
+    except IndexError:
+        handleErr("Out of range!")
 
 
 def importTimeline():
@@ -73,6 +99,11 @@ def actions(self, action):
         elif action == "frontLogic":
             frontLogic()
 
+def updateCustomTimeline(self):
+    self.textBrowser_2.clear()
+    for customclip in customTimeline:
+        self.textBrowser_2.append(customclip)
+
 def updateTimeline(self):
     global timelineContent
     if timelineContent != eval(open(path, "r").read()):
@@ -115,12 +146,13 @@ def fileSet(arg, setting):
 ip = fileRetrive("IP")
 port = fileRetrive("PORT")
 timerInterval = 100
-outputBuffer = ""
-clips = ""
-timeline = ""
+outputBuffer = ''
+clips = ''
+timeline = ''
 p = ''
-path = ""
-timelineContent = ""
+path = ''
+timelineContent = ''
+customTimeline = ['nul']
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
@@ -395,6 +427,7 @@ class Ui_MainWindow(object):
         self.pushButton_3.clicked.connect(lambda: actions(self, "ping"))
         self.pushButton_4.clicked.connect(lambda: addToCustomTimeline(self))
         self.pushButton_6.clicked.connect(lambda: importTimeline())
+        self.pushButton_7.clicked.connect(lambda: removeFromCustomTimeline(self))
         self.pushButton_8.clicked.connect(lambda: actions(self, "stop"))
         self.pushButton_9.clicked.connect(lambda: actions(self, "record"))
         self.pushButton_10.clicked.connect(lambda: actions(self, "backLogic"))
@@ -416,7 +449,10 @@ class Ui_MainWindow(object):
         if self.label_2.text() == "Sucessfull":
             updateClips(self)
         if path != "":
-            updateTimeline(self)
+            if customTimeline == ['nul']:
+                updateTimeline(self)
+            else:
+                updateCustomTimeline(self)
 
 if __name__ == "__main__":
     print("Starting Kayto...")
