@@ -79,9 +79,26 @@ def actions(self, action):
 
     if self.radioButton.isChecked() == True:
         if action == "play":
-            global p
-            p = subprocess.Popen(["python", "timeline_watchdog.py", path, ip, port])
-            outputToUi("Started Timeline Watchdog")
+            if self.checkBox.isChecked() == True:
+                global toPlayClip
+                global clipPlaying
+                try:
+                    print("Single clip playback")
+                    if clipPlaying == False:
+                        #ethernetprotocolapi.goToClipId(ip, port, int(timelineContent[toPlayClip][:1]))
+                        #ethernetprotocolapi.play(ip, port)
+                        print("go to clip id" + timelineContent[toPlayClip][:1])
+                        print("play")
+                        toPlayClip += 1
+                    else:
+                        #ethernetprotocolapi.play(ip, port)
+                        print("play")
+                except IndexError:
+                    toPlayClip = 0
+            else:
+                global p
+                p = subprocess.Popen(["python", "timeline_watchdog.py", path, ip, port])
+                outputToUi("Started Timeline Watchdog")
 
         if action == "stop":
             p.terminate()
@@ -153,6 +170,7 @@ p = ''
 path = ''
 timelineContent = ''
 customTimeline = ['nul']
+toPlayClip = 0
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
