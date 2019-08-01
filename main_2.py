@@ -9,6 +9,21 @@ import subprocess
 def handleErr(err):
     outputToUi("ERROR: " + err)
 
+def FileDialogExport(forOpen=False):
+    options = QFileDialog.Options()
+    options |= QFileDialog.DontUseNativeDialog
+    options |= QFileDialog.DontUseCustomDirectoryIcons
+    dialog = QFileDialog()
+    dialog.setOptions(options)
+
+    dialog.setFilter(dialog.filter() | QtCore.QDir.Hidden)
+    dialog.setFileMode(QFileDialog.AnyFile)
+    dialog.setAcceptMode(QFileDialog.AcceptOpen) if forOpen else dialog.setAcceptMode(QFileDialog.AcceptSave)
+    dialog.setDefaultSuffix("ktmf")
+    dialog.setNameFilters([f'{"Kayto Timeline File"} (*.{"ktmf"})'])
+    if dialog.exec_() == QDialog.Accepted:
+        return dialog.selectedFiles()[0]
+
 def FileDialog(forOpen=True):
     options = QFileDialog.Options()
     options |= QFileDialog.DontUseNativeDialog
@@ -56,8 +71,10 @@ def removeFromCustomTimeline(self):
 
 
 def importTimeline():
+    global customTimeline
     global path
     path = FileDialog()
+    customTimeline = ['nul']
     print(path)
 
 def outputToUi(output): #WIP, get a custom error / sucess message for each code. Ex "Started recording!" for record.
