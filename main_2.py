@@ -102,14 +102,11 @@ def actions(self, action):
                 try:
                     print("Single clip playback")
                     if clipPlaying == False:
-                        #ethernetprotocolapi.goToClipId(ip, port, int(timelineContent[toPlayClip][:1]))
-                        #ethernetprotocolapi.play(ip, port)
-                        print("go to clip id" + timelineContent[toPlayClip][:1])
-                        print("play")
+                        ethernetprotocolapi.goToClipId(ip, port, int(timelineContent[toPlayClip][:1]))
+                        ethernetprotocolapi.play(ip, port)
                         toPlayClip += 1
                     else:
-                        #ethernetprotocolapi.play(ip, port)
-                        print("play")
+                        ethernetprotocolapi.play(ip, port)
                 except IndexError:
                     toPlayClip = 0
             else:
@@ -188,6 +185,7 @@ path = ''
 timelineContent = ''
 customTimeline = ['nul']
 toPlayClip = 0
+clipPlaying = False
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
