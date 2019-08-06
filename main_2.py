@@ -5,9 +5,19 @@ import sys
 import ethernetprotocolapi
 import json
 import subprocess
+import time
 
 def handleErr(err):
     outputToUi("ERROR: " + err)
+
+def convertToSeconds(timecode): ## WARNING: HOURS NOT IMPLEMENTED. TIMELINE CLIPS OVER AN HOUR LONG WILL NOT WORK. shit will happen
+    convertedTime = 0
+    minutes = int(timecode[:2])
+    seconds = int(timecode[-2:])
+    for i in range(0, minutes):
+        convertedTime += 60
+    convertedTime += seconds
+    return convertedTime
 
 def FileDialogExport(forOpen=False):
     options = QFileDialog.Options()
@@ -98,16 +108,15 @@ def actions(self, action):
         if action == "play":
             if self.checkBox.isChecked() == True:
                 global toPlayClip
-                global clipPlaying
-                try:
-                    print("Single clip playback")
-                    if clipPlaying == False:
-                        ethernetprotocolapi.goToClipId(ip, port, int(timelineContent[toPlayClip][:1]))
-                        ethernetprotocolapi.play(ip, port)
-                        toPlayClip += 1
-                    else:
-                        ethernetprotocolapi.play(ip, port)
-                except IndexError:
+                if toPlayClip < len(timelineContent):
+                    ethernetprotocolapi.playRange(ip, port, "set", clipId=int(timelineContent[toPlayClip][:1]))
+                    time.sleep(0.2) 
+                    ethernetprotocolapi.play(ip, port)
+                    toPlayClip += 1
+                else:
+                    handleErr("End of Timeline! Resetting!")
+                    ethernetprotocolapi.stop(ip, port) #Failsafe in case there was playback when reset was reached, prevents the hole disklist from playing
+                    ethernetprotocolapi.playRange(ip, port, "clear")
                     toPlayClip = 0
             else:
                 global p
@@ -115,8 +124,11 @@ def actions(self, action):
                 outputToUi("Started Timeline Watchdog")
 
         if action == "stop":
-            p.terminate()
-            ethernetprotocolapi.stop(ip, port)
+            if self.checkBox.isChecked() == True:
+                ethernetprotocolapi.stop(ip, port)
+            else:
+                p.terminate()
+                ethernetprotocolapi.stop(ip, port)
 
     else:
         if action == "play":
@@ -185,7 +197,6 @@ path = ''
 timelineContent = ''
 customTimeline = ['nul']
 toPlayClip = 0
-clipPlaying = False
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):

@@ -166,3 +166,28 @@ def goToClipId(ip, port, clipId):
         return data
     except:
         return "err"
+
+def playRange(ip, port, mode, clipId=None):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    if mode == "set":
+        try:
+            s.connect((str(ip), int(port)))
+            s.send(("playrange set: clip id: %d\n" % clipId).encode())
+            time.sleep(0.1)
+            data = s.recv(1024)
+            s.close()
+            return data
+        except:
+            return "err"
+    elif mode == "clear":
+        try:
+            s.connect((str(ip), int(port)))
+            s.send(("playrange clear\n").encode())
+            time.sleep(0.1)
+            data = s.recv(1024)
+            s.close()
+            return data
+        except:
+            return "err"
+    else:
+        return "wrong mode"
