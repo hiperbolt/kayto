@@ -19,7 +19,7 @@ def convertToSeconds(timecode): ## WARNING: HOURS NOT IMPLEMENTED. TIMELINE CLIP
     convertedTime += seconds
     return convertedTime
 
-def FileDialogExport(forOpen=False):
+def FileDialogExport():
     options = QFileDialog.Options()
     options |= QFileDialog.DontUseNativeDialog
     options |= QFileDialog.DontUseCustomDirectoryIcons
@@ -28,13 +28,13 @@ def FileDialogExport(forOpen=False):
 
     dialog.setFilter(dialog.filter() | QtCore.QDir.Hidden)
     dialog.setFileMode(QFileDialog.AnyFile)
-    dialog.setAcceptMode(QFileDialog.AcceptOpen) if forOpen else dialog.setAcceptMode(QFileDialog.AcceptSave)
+    dialog.setAcceptMode(QFileDialog.AcceptSave)
     dialog.setDefaultSuffix("ktmf")
     dialog.setNameFilters([f'{"Kayto Timeline File"} (*.{"ktmf"})'])
     if dialog.exec_() == QDialog.Accepted:
         return dialog.selectedFiles()[0]
 
-def FileDialog(forOpen=True):
+def FileDialog():
     options = QFileDialog.Options()
     options |= QFileDialog.DontUseNativeDialog
     options |= QFileDialog.DontUseCustomDirectoryIcons
@@ -43,7 +43,7 @@ def FileDialog(forOpen=True):
 
     dialog.setFilter(dialog.filter() | QtCore.QDir.Hidden)
     dialog.setFileMode(QFileDialog.AnyFile)
-    dialog.setAcceptMode(QFileDialog.AcceptOpen) if forOpen else dialog.setAcceptMode(QFileDialog.AcceptSave)
+    dialog.setAcceptMode(QFileDialog.AcceptOpen)
     dialog.setDefaultSuffix("ktmf")
     dialog.setNameFilters([f'{"Kayto Timeline File"} (*.{"ktmf"})'])
     if dialog.exec_() == QDialog.Accepted:
@@ -55,13 +55,15 @@ def FileDialog(forOpen=True):
 def addToCustomTimeline(self):
     if clips != '':
         global customTimeline
-        if customTimeline == []:
+        if customTimeline == None:
             if timelineContent != '':
                 customTimeline = timelineContent
-
+            else:
+                customTimeline = []
         try:
             customTimeline.append(clips[self.spinBox.value()])
             self.textBrowser_2.append(clips[self.spinBox.value()])
+            print(customTimeline)
         except IndexError:
             handleErr("Out of range!")
     else:
@@ -69,28 +71,37 @@ def addToCustomTimeline(self):
 
 def removeFromCustomTimeline(self):
     global customTimeline
-    if customTimeline == []:
+    if customTimeline == None:
         if timelineContent != '':
             customTimeline = timelineContent
         else:
-            handleErr("Nothing to remove!")
+            handleErr("No timeline!")
             return
     try:
         del customTimeline[-self.spinBox_2.value()]
-        print(customTimeline)
     except IndexError:
         handleErr("Out of range!")
 
 def exportTimeline():
     global customTimeline
+    global path
+    if customTimeline == [] or customTimeline == None:
+        handleErr("Blank timeline!")
+        return
     exportFile = FileDialogExport()
-    print(exportFile)
+    try:
+        with open(exportFile, "w+") as f:
+            f.write(str(customTimeline))
+    except TypeError:
+        return
+    path = exportFile
+    customTimeline = None
 
 def importTimeline():
     global customTimeline
     global path
     path = FileDialog()
-    customTimeline = []
+    customTimeline = None
     print(path)
 
 def outputToUi(output): #WIP, get a custom error / sucess message for each code. Ex "Started recording!" for record.
@@ -476,6 +487,7 @@ class Ui_MainWindow(object):
         self.pushButton_2.clicked.connect(lambda: Dialog.show())
         self.pushButton_3.clicked.connect(lambda: actions(self, "ping"))
         self.pushButton_4.clicked.connect(lambda: addToCustomTimeline(self))
+        self.pushButton_5.clicked.connect(lambda: exportTimeline())
         self.pushButton_6.clicked.connect(lambda: importTimeline())
         self.pushButton_7.clicked.connect(lambda: removeFromCustomTimeline(self))
         self.pushButton_8.clicked.connect(lambda: actions(self, "stop"))
@@ -499,9 +511,12 @@ class Ui_MainWindow(object):
         if self.label_2.text() == "Sucessfull":
             updateClips(self)
         if path != "":
-            if customTimeline == []:
+            if customTimeline == None:
                 updateTimeline(self)
             else:
+                updateCustomTimeline(self)
+        else:
+            if customTimeline != None:
                 updateCustomTimeline(self)
 
 if __name__ == "__main__":
