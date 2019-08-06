@@ -55,11 +55,13 @@ def FileDialog(forOpen=True):
 def addToCustomTimeline(self):
     if clips != '':
         global customTimeline
-        if customTimeline == ['nul']:
-            customTimeline = TimelineContent
+        if customTimeline == []:
+            if timelineContent != '':
+                customTimeline = timelineContent
+
         try:
             customTimeline.append(clips[self.spinBox.value()])
-            self.textBrowser_2.append()
+            self.textBrowser_2.append(clips[self.spinBox.value()])
         except IndexError:
             handleErr("Out of range!")
     else:
@@ -67,7 +69,7 @@ def addToCustomTimeline(self):
 
 def removeFromCustomTimeline(self):
     global customTimeline
-    if customTimeline == ['nul']:
+    if customTimeline == []:
         if timelineContent != '':
             customTimeline = timelineContent
         else:
@@ -79,12 +81,16 @@ def removeFromCustomTimeline(self):
     except IndexError:
         handleErr("Out of range!")
 
+def exportTimeline():
+    global customTimeline
+    exportFile = FileDialogExport()
+    print(exportFile)
 
 def importTimeline():
     global customTimeline
     global path
     path = FileDialog()
-    customTimeline = ['nul']
+    customTimeline = []
     print(path)
 
 def outputToUi(output): #WIP, get a custom error / sucess message for each code. Ex "Started recording!" for record.
@@ -110,7 +116,7 @@ def actions(self, action):
                 global toPlayClip
                 if toPlayClip < len(timelineContent):
                     ethernetprotocolapi.playRange(ip, port, "set", clipId=int(timelineContent[toPlayClip][:1]))
-                    time.sleep(0.2) 
+                    time.sleep(0.2)
                     ethernetprotocolapi.play(ip, port)
                     toPlayClip += 1
                 else:
@@ -158,9 +164,9 @@ def updateTimeline(self):
 def updateClips(self):
     global clips
     if ethernetprotocolapi.diskList(ip, port).decode("utf-8").splitlines() != clips:
-        clips = ethernetprotocolapi.diskList(ip, port).decode("utf-8").splitlines()
+        clips = ethernetprotocolapi.diskList(ip, port).decode("utf-8").splitlines()[6:][:-1]
         self.textBrowser.clear()
-        for clip in clips[6:][:-1]:
+        for clip in clips:
             self.textBrowser.append(clip)
 
 def backLogic():
@@ -195,7 +201,7 @@ timeline = ''
 p = ''
 path = ''
 timelineContent = ''
-customTimeline = ['nul']
+customTimeline = None
 toPlayClip = 0
 
 class Ui_Dialog(object):
@@ -493,7 +499,7 @@ class Ui_MainWindow(object):
         if self.label_2.text() == "Sucessfull":
             updateClips(self)
         if path != "":
-            if customTimeline == ['nul']:
+            if customTimeline == []:
                 updateTimeline(self)
             else:
                 updateCustomTimeline(self)
