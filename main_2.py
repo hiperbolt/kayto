@@ -7,6 +7,14 @@ import json
 import subprocess
 import time
 
+def handleExit():
+    print("Exiting!")
+    try:
+        p.terminate()
+    except AttributeError:
+        pass
+    subprocess.Popen(["python", "exithandler.py", ip, port])
+
 def handleErr(err):
     outputToUi("ERROR: " + err)
 
@@ -63,7 +71,6 @@ def addToCustomTimeline(self):
         try:
             customTimeline.append(clips[self.spinBox.value()])
             self.textBrowser_2.append(clips[self.spinBox.value()])
-            print(customTimeline)
         except IndexError:
             handleErr("Out of range!")
     else:
@@ -86,7 +93,7 @@ def exportTimeline():
     global customTimeline
     global path
     if customTimeline == [] or customTimeline == None:
-        handleErr("Blank timeline!")
+        handleErr("No timeline to export!")
         return
     exportFile = FileDialogExport()
     try:
@@ -101,8 +108,13 @@ def importTimeline():
     global customTimeline
     global path
     path = FileDialog()
-    customTimeline = None
-    print(path)
+    if path == '':
+        return
+    if set(eval(open(path, "r").read())).issubset(clips) == True: #DANGEROUS!! TRUSTING INPUT TO BE CORRECT!! IF THE .KTMF FILE IS CORRUPTED SHIT WILL HAPPEN.
+        customTimeline = None
+    else:
+        path = ''
+        handleErr("TIMELINE CLIPS NOT ALL PRESENT ON DISK!")
 
 def outputToUi(output): #WIP, get a custom error / sucess message for each code. Ex "Started recording!" for record.
     global outputBuffer
@@ -118,48 +130,60 @@ def actions(self, action):
         else:
             self.label_2.setText("Unsucessfull :(")
 
-    if action == "toggleSlot":
-        outputToUi(ethernetprotocolapi.toggleSlot(ip, port))
+    if self.label_2.text() == "Sucessfull": # IF SUCCESFULL CONNECTION:
+        if action == "toggleSlot":
+            outputToUi(ethernetprotocolapi.toggleSlot(ip, port))
+
+        if self.radioButton.isChecked() == True: # TIMELINE MODE ACTIONS:
+
+            if path == '':
+                handleErr("No timeline imported!")
+                return
+
+            if customTimeline != None:
+                handleErr("You must first save your custom timeline!")
+                return
+
+            global toPlayClip
+            if action == "play":
+                if self.checkBox.isChecked() == True: #IF SINGLE CLIP PLAYBACK:
+                    if toPlayClip < len(timelineContent):
+                        ethernetprotocolapi.playRange(ip, port, "set", clipId=int(timelineContent[toPlayClip][:1]))
+                        time.sleep(0.2)
+                        ethernetprotocolapi.play(ip, port)
+                        toPlayClip += 1
+                    else:
+                        handleErr("End of Timeline! Resetting!")
+                        ethernetprotocolapi.stop(ip, port) #Failsafe in case there was playback when reset was reached, prevents the whole disklist from playing
+                        ethernetprotocolapi.playRange(ip, port, "clear")
+                        toPlayClip = 0
+                else: # IF NOT SINGLE CLIP PLAYBACK:
+                    global p
+                    p = subprocess.Popen(["python", "timeline_watchdog.py", path, ip, port])
+                    outputToUi("Started Timeline Watchdog")
+
+            if action == "stop":
+                if self.checkBox.isChecked() == True: # IF SINGLE CLIP:
+                    ethernetprotocolapi.stop(ip, port)
+                    toPlayClip -= 1
+                else: # IF NOT SINGLE CLIP:
+                    p.terminate()
+                    ethernetprotocolapi.stop(ip, port)
 
 
-    if self.radioButton.isChecked() == True:
-        if action == "play":
-            if self.checkBox.isChecked() == True:
-                global toPlayClip
-                if toPlayClip < len(timelineContent):
-                    print("playrange " + str(timelineContent[toPlayClip][:1]))
-                    ethernetprotocolapi.playRange(ip, port, "set", clipId=int(timelineContent[toPlayClip][:1]))
-                    time.sleep(0.2)
-                    ethernetprotocolapi.play(ip, port)
-                    toPlayClip += 1
-                else:
-                    handleErr("End of Timeline! Resetting!")
-                    ethernetprotocolapi.stop(ip, port) #Failsafe in case there was playback when reset was reached, prevents the hole disklist from playing
-                    ethernetprotocolapi.playRange(ip, port, "clear")
-                    toPlayClip = 0
-            else:
-                global p
-                p = subprocess.Popen(["python", "timeline_watchdog.py", path, ip, port])
-                outputToUi("Started Timeline Watchdog")
-
-        if action == "stop":
-            if self.checkBox.isChecked() == True:
+        else: # NON-TIMELINE MODE ACTIONS:
+            if action == "play":
+                ethernetprotocolapi.play(ip, port)
+            elif action == "stop":
                 ethernetprotocolapi.stop(ip, port)
-            else:
-                p.terminate()
-                ethernetprotocolapi.stop(ip, port)
-
+            elif action == "record":
+                ethernetprotocolapi.record(ip, port)
+            elif action == "backLogic":
+                backLogic()
+            elif action == "frontLogic":
+                frontLogic()
     else:
-        if action == "play":
-            ethernetprotocolapi.play(ip, port)
-        elif action == "stop":
-            ethernetprotocolapi.stop(ip, port)
-        elif action == "record":
-            ethernetprotocolapi.record(ip, port)
-        elif action == "backLogic":
-            backLogic()
-        elif action == "frontLogic":
-            frontLogic()
+        handleErr("NO CONNECTION. TRY TO PING!")
 
 def updateCustomTimeline(self):
     self.textBrowser_2.clear()
@@ -168,6 +192,13 @@ def updateCustomTimeline(self):
 
 def updateTimeline(self):
     global timelineContent
+    global path
+    if set(eval(open(path, "r").read())).issubset(clips) == False:
+        path = ''
+        self.textBrowser_2.clear()
+        handleErr("TIMELINE CLIPS NOT ALL PRESENT ON DISK!")
+        return
+
     if timelineContent != eval(open(path, "r").read()):
         self.textBrowser_2.clear()
         for tlclip in eval(open(path, "r").read()):
@@ -215,7 +246,7 @@ def fileSet(arg, setting):
 
 ip = fileRetrive("IP")
 port = fileRetrive("PORT")
-timerInterval = 100
+timerInterval = 500
 outputBuffer = ''
 clips = ''
 timeline = ''
@@ -504,8 +535,8 @@ class Ui_MainWindow(object):
         self.pushButton_9.clicked.connect(lambda: actions(self, "record"))
         self.pushButton_10.clicked.connect(lambda: actions(self, "backLogic"))
         self.pushButton_11.clicked.connect(lambda: actions(self, "frontLogic"))
-        self.horizontalSlider.sliderPressed.connect(lambda: jogLogic(self, "pressed"))
-        self.horizontalSlider.sliderReleased.connect(lambda: jogLogic(self, "released"))
+        #self.horizontalSlider.sliderPressed.connect(lambda: jogLogic(self, "pressed"))  NOT IMPLEMENTED
+        #self.horizontalSlider.sliderReleased.connect(lambda: jogLogic(self, "released")) NOT IMPLEMENTED
         self.actionToggle_Slot.triggered.connect(lambda: actions(self, "toggleSlot"))
         self.actionQuit.toggled.connect(lambda: sys.exit(0))
         self.timer.timeout.connect(lambda: self.updateWindow(MainWindow))
@@ -534,6 +565,7 @@ class Ui_MainWindow(object):
 if __name__ == "__main__":
     print("Starting Kayto...")
     app = QtWidgets.QApplication(sys.argv)
+    app.aboutToQuit.connect(lambda: handleExit())
     Dialog = QtWidgets.QDialog()
     ui = Ui_Dialog()
     ui.setupUi(Dialog)
