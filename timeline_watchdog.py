@@ -18,7 +18,7 @@ def convertToSeconds(timecode): ## WARNING: HOURS NOT IMPLEMENTED. TIMELINE CLIP
 
 def main(timeline):
     loadedClips = ethernetprotocolapi.diskList(ip, port).decode().splitlines()[6:][:-1]
-    if set(eval(timeline)).issubset(loadedClips) == True: #DANGEROUS!! TRUSTING INPUT TO BE CORRECT!! IF THE .KTMF FILE IS CORRUPT SHIT WILL HAPPEN.
+    if set(eval(timeline)).issubset(loadedClips) == True: #DANGEROUS!! TRUSTING INPUT TO BE CORRECT!! IF THE .KTMF FILE IS CORRUPTED SHIT WILL HAPPEN.
         #IF WE PASS THIS IF STATEMENT, TIMELINE FILE IS VALID
         for i in range(0, len(eval(timeline))): #FOR EACH TL CLIP
             for x in range(0, len(loadedClips)): #FOR EACH DISK CLIP
