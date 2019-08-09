@@ -118,14 +118,16 @@ def actions(self, action):
         else:
             self.label_2.setText("Unsucessfull :(")
 
-    if actions == "toggleSlot":
-        ethernetprotocolapi.toggleSlot(ip, port)
+    if action == "toggleSlot":
+        outputToUi(ethernetprotocolapi.toggleSlot(ip, port))
+
 
     if self.radioButton.isChecked() == True:
         if action == "play":
             if self.checkBox.isChecked() == True:
                 global toPlayClip
                 if toPlayClip < len(timelineContent):
+                    print("playrange " + str(timelineContent[toPlayClip][:1]))
                     ethernetprotocolapi.playRange(ip, port, "set", clipId=int(timelineContent[toPlayClip][:1]))
                     time.sleep(0.2)
                     ethernetprotocolapi.play(ip, port)
@@ -179,6 +181,14 @@ def updateClips(self):
         self.textBrowser.clear()
         for clip in clips:
             self.textBrowser.append(clip)
+
+def jogLogic(self, state):
+    if state == "pressed":
+        while True:
+            print("pressed loop")
+    elif state == "released":
+        print("released")
+
 
 def backLogic():
     if str(ethernetprotocolapi.transportInfo(ip, port).split(b"timecode: ",1)[1][:11].decode("utf-8")) == "00:00:00:00": #Go to previous clip because we're at the start of one alredy
@@ -494,7 +504,9 @@ class Ui_MainWindow(object):
         self.pushButton_9.clicked.connect(lambda: actions(self, "record"))
         self.pushButton_10.clicked.connect(lambda: actions(self, "backLogic"))
         self.pushButton_11.clicked.connect(lambda: actions(self, "frontLogic"))
-        self.actionToggle_Slot.toggled.connect(lambda: actions(self, "toggleSlot"))
+        self.horizontalSlider.sliderPressed.connect(lambda: jogLogic(self, "pressed"))
+        self.horizontalSlider.sliderReleased.connect(lambda: jogLogic(self, "released"))
+        self.actionToggle_Slot.triggered.connect(lambda: actions(self, "toggleSlot"))
         self.actionQuit.toggled.connect(lambda: sys.exit(0))
         self.timer.timeout.connect(lambda: self.updateWindow(MainWindow))
         self.timer.start(timerInterval)

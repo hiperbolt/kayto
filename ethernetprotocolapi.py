@@ -120,10 +120,12 @@ def toggleSlot(ip, port):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             s.connect((str(ip), int(port)))
-            # QUESTIONAR SLOT ATIVA PARA DEPOIS FAZER TOGGLE EM RELAÇÃO A ISSO, SLOT ATIVA = currSlot
-            if currSlot == 1:
+            s.send(b"slot info\n")
+            time.sleep(0.1)
+            currSlot = s.recv(2024).decode("utf-8").splitlines()[5][-1:]
+            if int(currSlot) == 1:
                 s.send(b"slot select: slot id: 2\n")
-            elif currSlot == 2:
+            elif int(currSlot) == 2:
                 s.send(b"slot select: slot id: 1\n")
             data = s.recv(1024)
             s.close()

@@ -514,5 +514,22 @@
  <resources>
   <include location="resources/background.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>actionToggle_Slot</sender>
+   <signal>triggered()</signal>
+   <receiver>textBrowser</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>775</x>
+     <y>596</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
